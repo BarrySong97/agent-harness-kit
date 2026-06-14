@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Node
+node_modules/
+*.log
+
+# 本地覆盖配置(团队共享的放 .codex/config.toml,本地私有的放这里)
+.codex/config.local.toml

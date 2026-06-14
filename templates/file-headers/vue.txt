@@ -1,0 +1,6 @@
+<!--
+  @purpose <这个组件是干嘛的,一句话>
+  @role    <在页面/模块里的角色;父组件/被谁用>
+  @deps    <关键依赖:子组件 / store / API>
+  @gotcha  <坑 / 约束;相关模块文档,如 docs/modules/checkout/README.md>
+-->
