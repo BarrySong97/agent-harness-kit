@@ -48,8 +48,8 @@
 ├── scripts/
 │   ├── check-docs.mjs # 防漂移检查器(sensor)
 │   └── hooks/         # 跨工具共享 hook 脚本(guard / format-lint / pre-commit)
-├── .claude/settings.json    # Claude Code hooks 配置
-├── .codex/{hooks.json,config.toml}  # Codex hooks 配置(指向同一批脚本)
+├── .claude/{settings.json, commands/sync-docs.md}        # Claude hooks + /sync-docs 命令
+├── .codex/{hooks.json, config.toml, prompts/sync-docs.md}  # Codex hooks + prompt(prompt 需软链到 ~/.codex/prompts/)
 └── src/…              # 每个源文件顶部有轻量 AI 文件头
 ```
 
@@ -80,6 +80,7 @@
 | 共享 hook 脚本 | [templates/scripts/hooks/](templates/scripts/hooks/) | guard(拦危险命令)/ format-lint(回灌)/ pre-commit |
 | Claude hooks | [templates/.claude/settings.json](templates/.claude/settings.json) | PreToolUse / PostToolUse / Stop 接到共享脚本 |
 | Codex hooks | [templates/.codex/](templates/.codex/) | hooks.json + config.toml,指向同一批脚本 |
+| 手动命令 /sync-docs | [templates/.claude/commands/sync-docs.md](templates/.claude/commands/sync-docs.md) · [templates/.codex/prompts/sync-docs.md](templates/.codex/prompts/sync-docs.md) | 主动发给 agent:检查并**修复**文档漂移(Claude slash / Codex prompt) |
 
 ---
 
@@ -94,6 +95,8 @@
 4. **填规范**:补 `docs/run.md`、`docs/conventions.md`、`docs/testing.md`。
 5. **装强制层**:见第七节,给 Claude(`.claude/settings.json`)和 Codex(`.codex/` + `/hooks` 信任)接上
    共享 hook 脚本;按技术栈填 `scripts/hooks/format-lint.mjs` 的 lint 命令;装 git `pre-commit`。
+6. **装 /sync-docs 命令**:Claude 的 `.claude/commands/sync-docs.md` 随仓库即用;Codex 把
+   `.codex/prompts/sync-docs.md` 软链到 `~/.codex/prompts/`(`ln -sf "$PWD/.codex/prompts/sync-docs.md" ~/.codex/prompts/`)。
 
 ## 五、老项目改造流程(可分模块增量做,不必一次到位)
 
@@ -115,9 +118,10 @@ agent 每次任务都走 `AGENTS.md` 第 4 节的 DoD,核心是:
 **读相关模块文档 → (大改先写 plan) → 改代码 → 同步文件头+模块文档+(必要时)ADR →
 写/跑测试 → 评审自查 → 跑 `check-docs` 清掉 ❌ → 按规范提交。**
 
-`check-docs` 是收尾闸门,有三种触发,覆盖两种工具:
+`check-docs` 是收尾闸门,有四种触发,覆盖两种工具:
 - **DoD 自跑**(通用主力):agent 收尾前自己 `node scripts/check-docs.mjs`,Claude 和 Codex 都适用。
 - **Stop hook**(自动拦截):Claude / Codex 收尾自动跑 `check-docs --hook`,有 ❌ 则 `exit 2` 阻止收尾,见第七节。
+- **手动命令 `/sync-docs`**(主动修复):做完一段工作发给 agent,让它**检查并主动修好**漂移/缺头/失效引用。Claude 用 `.claude/commands/`(随仓库共享);Codex 把 `.codex/prompts/sync-docs.md` 软链到 `~/.codex/prompts/`,用 `/prompts:sync-docs`。
 - **人工审计**:随时手动跑,尤其适合老项目改造和定期体检。
 
 ---
